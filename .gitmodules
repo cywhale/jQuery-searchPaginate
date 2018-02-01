@@ -1,0 +1,6 @@
+[submodule "jquery.easyPaginate"]
+	path = jquery.easyPaginate
+	url = https://github.com/st3ph/jquery.easyPaginate
+[submodule "jquery-searchable"]
+	path = jquery-searchable
+	url = https://github.com/stidges/jquery-searchable
