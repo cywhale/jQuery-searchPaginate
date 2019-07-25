@@ -26,7 +26,8 @@
     /* We show figures in sidebar and using jQuery fancybox, but it needs re-bind after pagination. 
        So after pagination, we trigger fancybox. And if the hashtag is abuout figure, scroll to the fig. It's very speific by your case and CSS. We use a global enable to turn on/off this feature. 
        Check fancybox setting in getfancybox()*/
-        hashFig: 'figx_'
+        hashFig: 'fig_',
+        hashKey: 'key_'
     };
     return this.each (function (instance) {        
         var plugin = {};
@@ -97,8 +98,9 @@
                 displayPage($(this).attr('rel'));
                 $('html').scrollTop(0);
                 
-              var thisHash = window.location.hash;
-              if(window.location.hash && plugin.settings.enableSideFig) {
+              //var thisHash = window.location.hash;
+              //if(window.location.hash && 
+              if (plugin.settings.enableSideFig) {
                 getfancybox();
               }
             });
@@ -107,7 +109,8 @@
                 page = plugin.settings.currentPage > 1?parseInt(plugin.settings.currentPage) - 1:1;
                 displayPage(page);
                 $('html').scrollTop(0);
-              if(window.location.hash && plugin.settings.enableSideFig) {
+              //if(window.location.hash && 
+              if (plugin.settings.enableSideFig) {
                 getfancybox();
               }
             });
@@ -116,13 +119,14 @@
               page = plugin.settings.currentPage < plugin.settings.pages?parseInt(plugin.settings.currentPage) + 1:plugin.settings.pages;
               displayPage(page);
               $('html').scrollTop(0);
-              if(window.location.hash && plugin.settings.enableSideFig) {
+              //if(window.location.hash && 
+              if (plugin.settings.enableSideFig) {
                 getfancybox();
               }
             });
         };
         
-        var displayPage = function(page, forceEffect) {
+        var displayPage = function(page, forceEffect, push_state=true) {
             if(plugin.settings.currentPage != page) {
                 plugin.settings.currentPage = parseInt(page);
                 offsetStart = (page - 1) * plugin.settings.elementsPerPage;
@@ -149,7 +153,8 @@
                         $('.easyPaginateNav a', plugin).removeClass('disabled');
                         break;
                 }
-                history.pushState(null, null, '#'+plugin.settings.hashPage+plugin.settings.currentPage);
+                
+                if (push_state) {history.pushState(null, null, '#'+plugin.settings.hashPage+plugin.settings.currentPage); }
             }
         };
         var transition_default = function(offsetStart, offsetEnd) {
@@ -161,31 +166,125 @@
             plugin.el.html(plugin.currentElements);
             //plugin.currentElements.show();
         };
+        
         plugin.settings = $.extend({}, defaults, options);
         plugin.currentElements = $([]);
         plugin.settings.objElements = plugin.el.find(plugin.settings.paginateElement);
         plugin.settings.pages = getNbOfPages();
         
-        var pagex= parseInt(document.location.hash.replace('#'+plugin.settings.hashPage, ''));
-        var figx = parseInt(document.location.hash.replace('#'+plugin.settings.hashFig, ''));
-        if(plugin.settings.pages > 1) {
-            plugin.el.html();
-            displayNav();
-            
-            page = 1;
-            if(document.location.hash.indexOf('#'+plugin.settings.hashPage) != -1) {
-                page = pagex;
-                if(page.length <= 0 || page < 1 || page > plugin.settings.pages) {
-                    page = 1;
+  // hash handler      
+  var hash = window.location.href.slice(window.location.href.indexOf('?')+1); 
+  var pars = {};
+  hash.split('&').map(ht => { 
+    let tmp = ht.split('='); 
+    pars[tmp[0]] = tmp[1]; 
+  });
+  var uri = window.location.toString();
+  var clean_uri = uri.substring(0, uri.indexOf("?"));
+  //var pagex= parseInt(document.location.hash.replace('#'+plugin.settings.hashPage, ''));
+  var pagex = 0;
+  if (pars.hasOwnProperty('p')) { // //plugin.settings.hashPage
+    pagex = pars.p; //parseInt(document.location.hash.replace('?'+plugin.settings.hashPage+'=', '')); //pars.p but p is a variable of seeting
+  } else if (pars.hasOwnProperty('page')) {
+    pagex = pars.page; // support another keyword
+  } else if (document.location.hash.indexOf('#'+ plugin.settings.hashPage) != -1) { //+plugin.settings.hashPage
+    pagex = parseInt(document.location.hash.replace('#' + plugin.settings.hashPage, ''));
+  }
+  
+  if (pagex>0) {
+    window.history.replaceState({}, document.title, clean_uri + "#" + plugin.settings.hashPage + pagex);
+    //hash_handler(hash="p", page=pagex); // Note that sometimes reload easyPaginate not ready, cannot find $(a link for page)
+    //history.pushState(null, null, '#' + plugin.settings.hashPage + pagex);
+  }
+  //var figx = parseInt(document.location.hash.replace('#'+plugin.settings.hashFig, ''));
+  //var keyx = parseInt(document.location.hash.replace('#'+plugin.settings.hashKey, ''));
+
+  var keyx = 0;
+  if (pars.hasOwnProperty('key')) { //plugin.settings.hashPage // it means first-link copkey by ?key=xxx, should display page-1
+    keyx = pars.key; 
+  } else if (document.location.hash.indexOf('#key_') != -1) { //+plugin.settings.hashPage
+    keyx = parseInt(document.location.hash.replace('#key_', ''));
+  }
+  
+  if (keyx>0) {
+    window.history.replaceState({}, document.title, clean_uri + "#" + plugin.settings.hashKey + keyx);
+    //hash_handler(hash="p", page=pagex); // Note that sometimes reload easyPaginate not ready, cannot find $(a link for page)
+    //history.pushState(null, null, '#'+ plugin.settings.hashKey + keyx);
+  }
+  
+  var figx = 0;
+  if (pars.hasOwnProperty('fig')) { //plugin.settings.hashFig  // it means first-link copkey by ?fig=xxx
+    figx = pars.fig; // support another keyword
+  } else if (document.location.hash.indexOf('#' + plugin.settings.hashFig) != -1) { //
+    figx = parseInt(document.location.hash.replace('#' + plugin.settings.hashFig, ''));
+  }
+  
+  if (figx>0) {
+    window.history.replaceState({}, document.title, clean_uri + "#" + plugin.settings.hashFig  + figx);
+    //$(window).trigger('hashchange');
+    //hash_handler(hash="fig_", fig=figx); // Note that sometimes reload easyPaginate not ready, cannot find $(a link for fig)
+    //history.pushState(null, null, '#' + plugin.settings.hashFig + figx);
+  }
+
+        var swsidex = function() {
+              if (plugin.settings.enableSideFig) {
+                var checkbox = document.querySelector("#swside");
+                if (!checkbox.checked) {
+                  $('#swside').prop("checked", !$('#swside').prop('checked'));
+                  $(".marginnote").css({"display": "block", "width": "33%"});
+                  $(".sidenote").css({"display": "block", "width": "33%"});
+                  $(".leader").css({"width": "55%"});
+                  $(".footinfo > div").css({"max-width": "50%"});
                 }
-            } 
+              }
+        };
+        var hash_scroller = function(targ, hash_type, hash_id) {
+            //var hash = $.attr(this, 'href').substr(1);
+            var pgitemval = plugin.settings.elementsPerPage; //pageItemField.val();
+            //var $targ= $('#key_' + keyx); 
+            var idxp = targ.parents(plugin.settings.paginateElement).index(); //$targ
+            var pagex = 1 + Math.floor(idxp / parseInt(pgitemval)); //that.settings.elementsPerPage);
+            if (idxp==-1) {
+              alert("Key or fig not found: " + hash_id);
+              displayPage(1, 'default'); 
+            } else {
+              //that.$element.children('.easyPaginateNav').find('[rel="' + pagex + '"]').first().trigger('click');
+              displayPage(pagex, 'default', push_state=false); 
+              if (hash_type==plugin.settings.hashFig) { swsidex(); }
+              
+              $('html, body').animate({scrollTop: $('#' + hash_type + hash_id).offset().top - 50}, 500);
+              window.history.replaceState("", document.title, window.location.href.replace(location.hash, "") + '#'+ hash_type + hash_id);
+              //history.pushState(null, null, '#'+hash);
+            }
+        }; 
+     
+        //if (pagex || !figx) { // if (figx) the page may jump to wrong page-1, because no p? specified at that time
+        if(plugin.settings.pages >= 1) {
+          plugin.el.html();
+          displayNav();
+          page = 1;
+          if (pagex>0 || (figx===0 && keyx===0)) { //document.location.hash.indexOf('#'+plugin.settings.hashPage) != -1 || (!figx && !keyx)
+            if (pagex) { page = pagex; }
+            if (page.length <= 0 || page < 1 || page > plugin.settings.pages) {
+                page = 1;
+            }
             displayPage(page, 'default'); 
-        }
-        if (plugin.settings.enableSideFig) {
-          if (figx != -1 && figx > 0) {
-            history.pushState(null, null, '#figx_'+figx);
-          }
-        }
+
+          } else {
+            //displayPage(1, 'default', push_state=false); 
+            
+            if (document.location.hash.indexOf('#'+plugin.settings.hashKey) != -1) {
+              //$('a[href="#' + plugin.settings.hashKey + keyx + '"]')[0].click();
+              //$('#easyPaginate').find('[href^="#' + plugin.settings.hashKey + keyx + '"]').first().trigger('click');
+              hash_scroller($('#' + plugin.settings.hashKey + keyx),  plugin.settings.hashKey, keyx);
+            } else if (document.location.hash.indexOf('#'+plugin.settings.hashFig) != -1) {
+              //$('a[href="#' + plugin.settings.hashFig + figx + '"]')[0].click();
+              //$('#easyPaginate').find('[href^="#' + plugin.settings.hashFig + figx + '"]').first().trigger('click');
+              hash_scroller($('#' + plugin.settings.hashFig + figx),  plugin.settings.hashFig, figx);
+            }
+          } 
+        } 
+        //}
     });
   };
 // Original searchable
@@ -212,8 +311,8 @@
             elementsPerPage: 15,
             enableSideFig: true, //It's very specific by case followed comments in aboving easyPaginate
     /* If want to unify the parameters in both seachable and easyPaginate, use $.extend(curr_sets..)*/
-            hashFig: 'figx_',
-            hashKey: 'key',   // specific by case, key value is use <mark id="key.."> for anchor in html 
+            hashFig: 'fig_',
+            hashKey: 'key_',   // specific by case, key value is use <mark id="key.."> for anchor in html 
             blockFig:'marginnote' /* old version: blkfigure, but now blkfigure move to sidebar, enclosed by .marginnote. The CSS selector that let figures shown in sidebar even when Searching. The pagination changes when searching (only parts of searched items shown in main column, including only parts of figures). Change CSS setting in your sidebar as turn on/off in function switchSidebar() */
         },
         searchActiveCallback = false,
@@ -242,6 +341,9 @@
         $(".leader").css({"width": "55%"});
         $(".footinfo > div").css({"max-width": "50%"});
       }
+      //window.setTimeout(function() {
+      //  window.scrollTo(window.scrollX, window.scrollY - 150);
+      //}, 0);
     }
 
 /*The following code to solve IE6-8 not support array.reduce in js */
@@ -347,8 +449,8 @@
               that.$pagictent.easyPaginate(curr_sets);//Call easyPagination
             });
             
-        // listen anchor click and jump pages
-          this.$pagictent.on('click', 'a[href^="#' +that.settings.hashKey + '"]', function(e) {
+        // listen anchor click and jump pages //hashKey: "key" for mark tag
+          this.$pagictent.on('click', 'a[href^="#' + that.settings.hashKey + '"]', function(e) {
             e.preventDefault();
             var hash = $.attr(this, 'href').substr(1);
             var pgitemval = that.$pageItem.val();
@@ -357,31 +459,33 @@
             var idxp = $targ.parents(that.settings.paginateElement).index();
             var pagex= 1 + Math.floor(idxp / parseInt(pgitemval)); //that.settings.elementsPerPage);
             if (idxp==-1) {
-              alert("Key not find: " + hash);
+              alert("Key not found: " + hash);
             } else {
-              that.$element.children('.easyPaginateNav').find('[rel="' + pagex + '"]').trigger('click');
-              window.history.replaceState("", document.title, window.location.href.replace(location.hash, "") + '#p'+pagex);
+              that.$element.children('.easyPaginateNav').find('[rel="' + pagex + '"]').first().trigger('click'); 
+              window.history.replaceState("", document.title, window.location.href.replace(location.hash, "") + '#'+ hash);
               $('html, body').animate({scrollTop: $targ.offset().top - 50}, 500);
               //history.pushState(null, null, '#'+hash);
             }
-          });
+          }); 
        // listen figx anchor click and open sidebar
-          this.$pagictent.on('click', 'a[href^="#' +that.settings.hashFig + '"]', function(e) { // hashFig
-            if (that.settings.enableSideFig) {
-              switchSidebar();
-            }
+          this.$pagictent.on('click', 'a[href^="#' + that.settings.hashFig + '"]', function(e) { // hashFig
+           //e.preventDefault();
+           if (that.settings.enableSideFig) {
+             switchSidebar();
+           }
+
            var hash = $.attr(this, 'href').substr(1);
            var pgitemval = that.$pageItem.val();
            var $targ= $('#' + hash); 
            var idxp = $targ.parents(that.settings.paginateElement).index();
            var pagex= 1 + Math.floor(idxp / parseInt(pgitemval)); 
            if (idxp==-1) {
-             alert("Key not find: " + hash);
+             alert("Fig not found: " + hash);
            } else {
-             that.$element.children('.easyPaginateNav').find('[rel="' + pagex + '"]').trigger('click');
+             that.$element.children('.easyPaginateNav').find('[rel="' + pagex + '"]').first().trigger('click'); 
              window.history.replaceState("", document.title, window.location.href.replace(location.hash, "") + '#' + hash);
              $('html, body').animate({scrollTop: $targ.offset().top - 150}, 500);
-           }
+           } 
          });
         },
         updateStriping: function() {
