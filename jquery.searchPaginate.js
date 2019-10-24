@@ -6,6 +6,88 @@
  * Copyright (c) 2008, St?hane Litou <contact@mushtitude.com> All rights reserved.
  */
  // Now we call easyPaginate() from the "searchable" main function, modified by cywhale
+
+var gblfx = function() {
+
+    var getfancybox = function() {
+      $('a.fbox').fancybox({
+        //modal: true,
+        closeBtn: true,
+        showCloseButton : true,
+        enableEscapeButton: true,
+        hideOnOverlayClick: false,
+        hideOnContentClick: false,
+        closeClick : false,
+        helpers : {
+          overlay: {
+            locked: false,
+            closeClick: false
+          },
+          title: {
+            type: 'inside',
+            position: 'top',
+          }
+        },
+        nextEffect: 'fade',
+        prevEffect: 'fade',
+        beforeLoad: function() {
+          // if commented out, it works
+          // event.preventDefault(); 
+          slideMove = false;
+        },
+        beforeShow: function() {
+          this.title = $(this.element).data("alt");
+        },
+        afterShow: function() { 
+          //$("div.fancybox-wrap").addClass('modal');
+          this.wrap.draggable();
+          document.getElementsByClassName("fancybox-overlay")[0].style.display = "none";
+          $(".fancybox-skin").css({'display':'inline-block', 'position':'relative'}); 
+          $(".fancybox-inner").css({'width':'100%', 'height':'100%'}); 
+          $('.fancybox-inner').resizable({
+             //alsoResize: ".modal-dialog",
+             aspectRatio: true,
+             minHeight: 300,
+             minWidth: 300
+          });
+          //$(".fancybox-wrap").easydrag(); 
+          //$(".fancybox-wrap").draggable();
+        }/*,
+        onComplete: function() {
+          // append the handler on the top-left corner of fancybox
+          $(".fancybox-wrap").append("<button id='handler'>Drag me</button>");
+          // set the handler using the handler's element ID
+          $(".fancybox-wrap").setHandler('handler');
+        },
+        onClosed: function() {
+          $(".fancybox-wrap #handler").remove();
+        }*/
+      });
+    };
+
+    var en_swsidex = function(checkbox, swid='#swside') {
+      //if (plugin.settings.enableSideFig) {
+      //var checkbox = document.querySelector("#swside");
+        if (!checkbox.checked) {
+            $(swid).prop("checked", !$(swid).prop('checked'));
+            $(".marginnote").css({"display": "block", "width": "33%"});
+            $(".sidenote").css({"display": "block", "width": "33%"});
+            $(".leader").css({"width": "55%"});
+            $(".footinfo > div").css({"max-width": "50%"});
+        }
+      //}
+    };
+    return {
+        getfancybox: function () {
+          return getfancybox();
+        },
+        en_swsidefx: function(checkbox, swid='#swside') {
+          return en_swsidex(checkbox, swid);
+        }
+    };
+}();
+ 
+ 
   $.fn.easyPaginate = function (options) {
     var defaults = {
         //currentPage: 1,
@@ -29,6 +111,8 @@
         hashFig: 'fig_',
         hashKey: 'key_'
     };
+    
+
     return this.each (function (instance) {        
         var plugin = {};
         plugin.el = $(this);
@@ -40,29 +124,6 @@
         };
         var getNbOfPages = function() {
             return Math.ceil(plugin.settings.objElements.length / plugin.settings.elementsPerPage);    
-        };
-        var getfancybox = function() {
-          $('a.fbox').fancybox({ // use class "fbox" as fancybox 
-            closeBtn: false,
-            showCloseButton : false,
-            enableEscapeButton: true,
-            hideOnOverlayClick: false,
-            hideOnContentClick: false,
-            helpers : {
-              title: {
-                type: 'inside',
-                position: 'top'
-              }
-            },
-            nextEffect: 'fade',
-            prevEffect: 'fade',
-            beforeLoad: function () {
-              slideMove = false;
-            },
-            beforeShow: function () {
-              this.title = $(this.element).data("alt"); // show data-alt as fig caption
-            }
-          });
         };
         
         var displayNav = function() {
@@ -101,7 +162,7 @@
               //var thisHash = window.location.hash;
               //if(window.location.hash && 
               if (plugin.settings.enableSideFig) {
-                getfancybox();
+                gblfx.getfancybox();
               }
             });
             $(elSelector + ' .easyPaginateNav a.prev').on('click', function(e) {
@@ -111,7 +172,7 @@
                 $('html').scrollTop(0);
               //if(window.location.hash && 
               if (plugin.settings.enableSideFig) {
-                getfancybox();
+                gblfx.getfancybox();
               }
             });
             $(elSelector + ' .easyPaginateNav a.next').on('click', function(e) {
@@ -121,7 +182,7 @@
               $('html').scrollTop(0);
               //if(window.location.hash && 
               if (plugin.settings.enableSideFig) {
-                getfancybox();
+                gblfx.getfancybox();
               }
             });
         };
@@ -171,6 +232,8 @@
         plugin.currentElements = $([]);
         plugin.settings.objElements = plugin.el.find(plugin.settings.paginateElement);
         plugin.settings.pages = getNbOfPages();
+
+        gblfx.getfancybox();
         
   // hash handler      
   var hash = window.location.href.slice(window.location.href.indexOf('?')+1); 
@@ -226,18 +289,6 @@
     //history.pushState(null, null, '#' + plugin.settings.hashFig + figx);
   }
 
-        var swsidex = function() {
-              if (plugin.settings.enableSideFig) {
-                var checkbox = document.querySelector("#swside");
-                if (!checkbox.checked) {
-                  $('#swside').prop("checked", !$('#swside').prop('checked'));
-                  $(".marginnote").css({"display": "block", "width": "33%"});
-                  $(".sidenote").css({"display": "block", "width": "33%"});
-                  $(".leader").css({"width": "55%"});
-                  $(".footinfo > div").css({"max-width": "50%"});
-                }
-              }
-        };
         var hash_scroller = function(targ, hash_type, hash_id) {
             //var hash = $.attr(this, 'href').substr(1);
             var pgitemval = plugin.settings.elementsPerPage; //pageItemField.val();
@@ -250,7 +301,7 @@
             } else {
               //that.$element.children('.easyPaginateNav').find('[rel="' + pagex + '"]').first().trigger('click');
               displayPage(pagex, 'default', push_state=false); 
-              if (hash_type==plugin.settings.hashFig) { swsidex(); }
+              if (hash_type==plugin.settings.hashFig) { gblfx.en_swsidefx(checkbox=document.querySelector("#swside")); }
               
               $('html, body').animate({scrollTop: $('#' + hash_type + hash_id).offset().top - 50}, 500);
               window.history.replaceState("", document.title, window.location.href.replace(location.hash, "") + '#'+ hash_type + hash_id);
@@ -320,6 +371,62 @@
         searchFocusCallback = false,
         searchBlurCallback = false;
 
+    function getfancyboxfx() {
+      $('a.fbox').fancybox({
+        //modal: true,
+        closeBtn: true,
+        showCloseButton : true,
+        enableEscapeButton: true,
+        hideOnOverlayClick: false,
+        hideOnContentClick: false,
+        closeClick : false,
+        helpers : {
+          overlay: {
+            locked: false,
+            closeClick: false
+          },
+          title: {
+            type: 'inside',
+            position: 'top',
+          }
+        },
+        nextEffect: 'fade',
+        prevEffect: 'fade',
+        beforeLoad: function() {
+          // if commented out, it works
+          // event.preventDefault(); 
+          slideMove = false;
+        },
+        beforeShow: function() {
+          this.title = $(this.element).data("alt");
+        },
+        afterShow: function() { 
+          //$("div.fancybox-wrap").addClass('modal');
+          this.wrap.draggable();
+          document.getElementsByClassName("fancybox-overlay")[0].style.display = "none";
+          $(".fancybox-skin").css({'display':'inline-block', 'position':'relative'}); 
+          $(".fancybox-inner").css({'width':'100%', 'height':'100%'}); 
+          $('.fancybox-inner').resizable({
+             //alsoResize: ".modal-dialog",
+             aspectRatio: true,
+             minHeight: 300,
+             minWidth: 300
+          });
+          //$(".fancybox-wrap").easydrag(); 
+          //$(".fancybox-wrap").draggable();
+        }/*,
+        onComplete: function() {
+          // append the handler on the top-left corner of fancybox
+          $(".fancybox-wrap").append("<button id='handler'>Drag me</button>");
+          // set the handler using the handler's element ID
+          $(".fancybox-wrap").setHandler('handler');
+        },
+        onClosed: function() {
+          $(".fancybox-wrap #handler").remove();
+        }*/
+      });
+    }
+    
     function isFunction(value) {
         return typeof value === 'function';
     }
@@ -331,7 +438,7 @@
       }
       return o;
     }
-    
+    /*
     function switchSidebar() { // Needed only when you have a sidebar switch #swside (checkbox)
       var checkbox = document.querySelector("#swside");
       if (!checkbox.checked) { // Note that decide to turn on/off CSS class by case, by your design.
@@ -345,7 +452,7 @@
       //  window.scrollTo(window.scrollX, window.scrollY - 150);
       //}, 0);
     }
-
+    */
 /*The following code to solve IE6-8 not support array.reduce in js */
     if ( 'function' !== typeof Array.prototype.reduce ) {
         Array.prototype.reduce = function( callback, opt_initialValue ) {
@@ -447,6 +554,7 @@
               curr_sets = $.extend(curr_sets, {elementsPerPage: parseInt(pgitemval)});
               that.$element.children().remove('.easyPaginateNav');
               that.$pagictent.easyPaginate(curr_sets);//Call easyPagination
+              gblfx.getfancybox();
             });
             
         // listen anchor click and jump pages //hashKey: "key" for mark tag
@@ -471,7 +579,8 @@
           this.$pagictent.on('click', 'a[href^="#' + that.settings.hashFig + '"]', function(e) { // hashFig
            //e.preventDefault();
            if (that.settings.enableSideFig) {
-             switchSidebar();
+             //switchSidebar();
+             gblfx.en_swsidefx(checkbox=document.querySelector("#swside"));
            }
 
            var hash = $.attr(this, 'href').substr(1);
